@@ -1,9 +1,10 @@
-package org.asheldon;
+package org.asheldon.streams.data;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+import org.asheldon.streams.model.PartnerSku;
 
 import java.util.List;
 

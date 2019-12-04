@@ -1,8 +1,9 @@
-package org.asheldon;
+package org.asheldon.streams.data;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import org.asheldon.streams.model.PartnerSkuKey;
 
 @Builder
 @Getter

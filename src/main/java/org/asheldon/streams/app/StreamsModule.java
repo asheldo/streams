@@ -1,7 +1,8 @@
-package org.asheldon;
+package org.asheldon.streams.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
+import org.asheldon.streams.RemoteInputProcessorService;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +31,7 @@ public class StreamsModule implements Module {
     @Provides
     @Singleton
     @Inject
-    public FileHandlerService provideFileHandlerService(ObjectMapper mapper, Executor executor) {
-        return new FileHandlerService(mapper, executor);
+    public RemoteInputProcessorService provideFileHandlerService(ObjectMapper mapper, Executor executor) {
+        return new RemoteInputProcessorService(mapper, executor);
     }
 }

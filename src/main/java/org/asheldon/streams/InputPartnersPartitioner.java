@@ -1,4 +1,4 @@
-package org.asheldon;
+package org.asheldon.streams;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,6 +6,11 @@ import com.google.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.asheldon.streams.data.PartnerSkuLineAndKey;
+import org.asheldon.streams.data.PartnerSkus;
+import org.asheldon.streams.data.PartnerSkusLinesAndKeys;
+import org.asheldon.streams.model.PartnerSku;
+import org.asheldon.streams.model.PartnerSkuKey;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -19,7 +24,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class PartnerPartitioner implements Spliterator<PartnerSkus> {
+public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
 
     private ObjectMapper mapper;
 
@@ -32,7 +37,7 @@ public class PartnerPartitioner implements Spliterator<PartnerSkus> {
     private int remaining;
 
     @Inject
-    public PartnerPartitioner(final Executor executor, final ObjectMapper mapper) {
+    public InputPartnersPartitioner(final Executor executor, final ObjectMapper mapper) {
         this.executor = executor;
         this.mapper = mapper;
     }
@@ -74,7 +79,7 @@ public class PartnerPartitioner implements Spliterator<PartnerSkus> {
     }
 
     private List<CompletableFuture<PartnerSkus>> createPartnersFutures(List<String> lines) {
-        Map<String,PartnerSkusLinesAndKeys> map = new HashMap<>();
+        Map<String, PartnerSkusLinesAndKeys> map = new HashMap<>();
         List<CompletableFuture<PartnerSkus>> futures =
                 lines.stream()
                 .map(line -> readPartnerSkuLineAndKey(line))

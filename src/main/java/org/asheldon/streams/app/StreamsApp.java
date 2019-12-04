@@ -1,12 +1,13 @@
-package org.asheldon;
+package org.asheldon.streams.app;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.asheldon.streams.Outputs;
+import org.asheldon.streams.RemoteInputProcessorService;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 @Slf4j
 @Builder
@@ -28,7 +29,7 @@ public class StreamsApp {
     private Injector injector;
 
     public void run(final File input) throws Exception {
-        FileHandlerService service = injector.getInstance(FileHandlerService.class);
+        RemoteInputProcessorService service = injector.getInstance(RemoteInputProcessorService.class);
         Outputs outputs = service.read(input);
         log.info("Outputs: {}", outputs);
     }

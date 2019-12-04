@@ -1,10 +1,12 @@
-package org.asheldon;
+package org.asheldon.streams;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.asheldon.streams.data.PartnerSkus;
+import org.asheldon.streams.model.PartnerSku;
 
 import java.io.*;
 import java.util.MissingResourceException;

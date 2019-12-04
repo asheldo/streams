@@ -1,4 +1,4 @@
-package org.asheldon;
+package org.asheldon.streams.data;
 
 import lombok.Builder;
 import lombok.Getter;

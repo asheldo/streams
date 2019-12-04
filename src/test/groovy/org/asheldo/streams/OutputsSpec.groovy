@@ -1,7 +1,7 @@
-package org.asheldo
+package org.asheldo.streams
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.asheldon.Outputs
+import org.asheldon.streams.Outputs
 import spock.lang.Specification
 import spock.lang.Unroll
 
