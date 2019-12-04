@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
@@ -50,8 +51,9 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
             );
      */
 
-    public BlockingQueue<PartnerSkus> process(List<String> lines) throws InterruptedException {
-        List<CompletableFuture<PartnerSkus>> futures = createPartnersFutures(lines);
+    public BlockingQueue<PartnerSkus> process(Stream<String> lines) throws InterruptedException {
+        List<CompletableFuture<PartnerSkus>> futures
+                = createPartnersFutures(lines);
         this.initialSize = futures.size();
         this.remaining = initialSize;
         CompletableFuture
@@ -78,10 +80,9 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
         return PartnerSkuLineAndKey.builder().partnerSkuKey(key).skuLine(line).build();
     }
 
-    private List<CompletableFuture<PartnerSkus>> createPartnersFutures(List<String> lines) {
+    private List<CompletableFuture<PartnerSkus>> createPartnersFutures(Stream<String> lines) {
         Map<String, PartnerSkusLinesAndKeys> map = new HashMap<>();
-        List<CompletableFuture<PartnerSkus>> futures =
-                lines.stream()
+        List<CompletableFuture<PartnerSkus>> futures = lines
                 .map(line -> readPartnerSkuLineAndKey(line))
                 .reduce(map,
                         new PartnerLinesAccumulator(),

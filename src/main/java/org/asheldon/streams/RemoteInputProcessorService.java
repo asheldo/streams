@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RemoteInputProcessorService {
 
@@ -34,8 +35,8 @@ public class RemoteInputProcessorService {
                 .validated(getValidated(local))
                 .build();
         // 2: what to do with lines? stream 'em ...
-        List<String> lines = new BufferedReader(new FileReader(local))
-                .lines().collect(Collectors.toList());
+        Stream<String> lines = new BufferedReader(new FileReader(local))
+                .lines(); // .collect(Collectors.toList());
         // 3: partition/index lines by partner
         InputPartnersPartitioner partitioner = new InputPartnersPartitioner(executor, mapper);
         BlockingQueue<PartnerSkus> partners = partitioner.process(lines);

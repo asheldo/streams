@@ -26,6 +26,7 @@ class OutputsSpec extends Specification {
 
         when:
         outputs.getValidatedOutput().write(line1)
+        outputs.close()
         List<String> lines = Paths.get(valid.getAbsolutePath()).readLines("UTF-8")
 
         then:
@@ -33,7 +34,7 @@ class OutputsSpec extends Specification {
 
         where:
         line1 | _
-        """{"partner":"p","sku":"s","miscDetails":"xyz"} """ | _
+        """{"partner":"p","sku":"s","miscDetails":"xyz"}""" | _
     }
 
 

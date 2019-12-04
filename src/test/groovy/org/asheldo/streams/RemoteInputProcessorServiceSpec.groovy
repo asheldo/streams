@@ -37,8 +37,10 @@ class RemoteInputProcessorServiceSpec extends Specification {
         given:
         partnerLines.entrySet().forEach { lines ->
             String partner = lines.key
-            (1..(lines.value)).forEach { it ->
-                writer.write("""{"partner":"${partner}","sku":"${partner}${it}","miscDetails":"xyz ${it}"} """)
+            (1..(lines.value)).eachWithIndex { it, ix ->
+                writer.write(
+                        """{"partner":"${partner}","sku":"${partner}${it}","miscDetails":"xyz ${it}"}
+""")
             }
         }
         writer.close()
@@ -48,6 +50,7 @@ class RemoteInputProcessorServiceSpec extends Specification {
 
         when:
         Outputs outputs = service.read(input)
+        outputs.close()
         File valid = outputs.getValidated()
 
         then:

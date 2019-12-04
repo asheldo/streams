@@ -55,7 +55,8 @@ public class Outputs {
 
     private boolean writeValid(PartnerSku validSku) {
         try {
-            mapper.writeValue(getValidatedOutput(), validSku);
+            String value = mapper.writeValueAsString(validSku);
+            getValidatedOutput().write(value + "\n");
             return true;
         } catch (IOException e) {
             log.error("Will try to write as invalid, problem writing valid sku: " + validSku, e);
@@ -66,11 +67,17 @@ public class Outputs {
 
     private boolean writeInvalid(PartnerSku invalidSku) {
         try {
-            mapper.writeValue(getInvalidatedOutput(), invalidSku);
+            String value = mapper.writeValueAsString(invalidSku);
+            getInvalidatedOutput().write(value + "\n");
             return true;
         } catch (IOException e) {
             log.error("Problem writing invalid sku: " + invalidSku, e);
         }
         return false;
+    }
+
+    public void close() throws IOException {
+        getValidatedOutput().close();
+        getInvalidatedOutput().close();
     }
 }
