@@ -1,12 +1,12 @@
-package org.asheldon.streams;
+package org.asheldo.streams;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.asheldon.streams.data.PartnerSkus;
-import org.asheldon.streams.model.PartnerSku;
+import org.asheldo.streams.data.PartnerSkus;
+import org.asheldo.streams.model.PartnerSku;
 
 import java.io.*;
 import java.util.MissingResourceException;
@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 
 @Slf4j
 @Builder
-public class Outputs {
+public class LocalOutputs {
 
     @NonNull
     private ObjectMapper mapper;

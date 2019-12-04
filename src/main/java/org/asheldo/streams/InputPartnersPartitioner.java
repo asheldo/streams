@@ -1,4 +1,4 @@
-package org.asheldon.streams;
+package org.asheldo.streams;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,11 +6,11 @@ import com.google.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.asheldon.streams.data.PartnerSkuLineAndKey;
-import org.asheldon.streams.data.PartnerSkus;
-import org.asheldon.streams.data.PartnerSkusLinesAndKeys;
-import org.asheldon.streams.model.PartnerSku;
-import org.asheldon.streams.model.PartnerSkuKey;
+import org.asheldo.streams.data.PartnerSkuLineAndKey;
+import org.asheldo.streams.data.PartnerSkus;
+import org.asheldo.streams.data.PartnerSkusLinesAndKeys;
+import org.asheldo.streams.model.PartnerSku;
+import org.asheldo.streams.model.PartnerSkuKey;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;

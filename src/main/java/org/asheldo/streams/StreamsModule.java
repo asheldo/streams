@@ -1,8 +1,7 @@
-package org.asheldon.streams.app;
+package org.asheldo.streams;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
-import org.asheldon.streams.RemoteInputProcessorService;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;

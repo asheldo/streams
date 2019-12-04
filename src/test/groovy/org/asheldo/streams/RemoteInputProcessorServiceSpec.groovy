@@ -1,9 +1,7 @@
 package org.asheldo.streams
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.asheldon.streams.Outputs
-import org.asheldon.streams.model.PartnerSkuKey
-import org.asheldon.streams.RemoteInputProcessorService
+import org.asheldo.streams.model.PartnerSkuKey
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -19,7 +17,7 @@ class RemoteInputProcessorServiceSpec extends Specification {
     FileWriter writer
 
     def setup() {
-        input = Files.createTempFile("pre","suff").toFile()
+        input = Files.createTempFile("pre", "suff").toFile()
         input.deleteOnExit()
         writer = new FileWriter(input)
     }
@@ -27,8 +25,8 @@ class RemoteInputProcessorServiceSpec extends Specification {
     /**
      public void run(final File input) throws Exception {
      RemoteInputProcessorService service = injector.getInstance(RemoteInputProcessorService.class);
-     Outputs outputs = service.read(input);
-     log.info("Outputs: {}", outputs);
+     LocalOutputs outputs = service.doTerminations(input);
+     log.info("LocalOutputs: {}", outputs);
      }
      */
 
@@ -39,8 +37,7 @@ class RemoteInputProcessorServiceSpec extends Specification {
             String partner = lines.key
             (1..(lines.value)).eachWithIndex { it, ix ->
                 writer.write(
-                        """{"partner":"${partner}","sku":"${partner}${it}","miscDetails":"xyz ${it}"}
-""")
+                        """{"partner":"${partner}","sku":"${partner}${it}","miscDetails":"xyz ${it}"}\n""")
             }
         }
         writer.close()
@@ -49,20 +46,20 @@ class RemoteInputProcessorServiceSpec extends Specification {
         RemoteInputProcessorService service = new RemoteInputProcessorService(mapper, executorService)
 
         when:
-        Outputs outputs = service.read(input)
-        outputs.close()
-        File valid = outputs.getValidated()
+        RemoteOutputs outputs = service.doTerminations(input)
+        File valid = outputs.validated
 
         then:
-        List<String> validLines = Paths.get(valid.getAbsolutePath()).readLines("UTF-8")
+        List<String> validLines = Paths.get(valid.absolutePath).readLines("UTF-8")
         List<String> validSkus = validLines.stream().map { entry ->
-            return mapper.readValue(entry, PartnerSkuKey).sku
+            mapper.readValue(entry, PartnerSkuKey).sku
         }.collect(Collectors.toList())
         validSkus.get(0) == "p1"
         validSkus.get(2) == "q2"
 
         where:
-        partnerLines  | _
-        ["p":1,"q":2] | _
+        partnerLines   | _
+        ["p":1, "q":2] | _
     }
+
 }
