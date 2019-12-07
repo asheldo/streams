@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.asheldo.streams.data.PartnerSkus;
+import org.asheldo.streams.data.PartnerSkusOutput;
 import org.asheldo.streams.model.PartnerSku;
 
 import java.io.*;
@@ -40,7 +40,7 @@ public class LocalOutputs {
         }
     }
 
-    public Consumer<PartnerSkus> handler() throws IOException {
+    public Consumer<PartnerSkusOutput> handler() throws IOException {
         return (partner) -> {
             partner.getValidSkus().stream()
                     .map(validSku -> writeValid(validSku))

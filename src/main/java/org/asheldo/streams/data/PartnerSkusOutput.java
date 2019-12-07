@@ -10,7 +10,7 @@ import java.util.List;
 
 @Builder(toBuilder = true)
 @Getter
-public class PartnerSkus {
+public class PartnerSkusOutput {
 
     private boolean cancelled;
 

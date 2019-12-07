@@ -46,7 +46,7 @@ class RemoteInputProcessorServiceSpec extends Specification {
         RemoteInputProcessorService service = new RemoteInputProcessorService(mapper, executorService)
 
         when:
-        RemoteOutputs outputs = service.doTerminations(input)
+        RemoteOutputs outputs = service.doTerminations(input, "stuff-ing")
         File valid = outputs.validated
 
         then:

@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.asheldo.streams.data.PartnerSkuLineAndKey;
-import org.asheldo.streams.data.PartnerSkus;
+import org.asheldo.streams.data.PartnerSkusOutput;
 import org.asheldo.streams.data.PartnerSkusLinesAndKeys;
 import org.asheldo.streams.model.PartnerSku;
 import org.asheldo.streams.model.PartnerSkuKey;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
+public class InputPartnersPartitioner implements Spliterator<PartnerSkusOutput> {
 
     private ObjectMapper mapper;
 
@@ -33,7 +33,7 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
 
     private int initialSize;
 
-    private final BlockingQueue<PartnerSkus> completed = new LinkedBlockingQueue<>();
+    private final BlockingQueue<PartnerSkusOutput> completed = new LinkedBlockingQueue<>();
 
     private int remaining;
 
@@ -51,8 +51,8 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
             );
      */
 
-    public BlockingQueue<PartnerSkus> process(Stream<String> lines) throws InterruptedException {
-        List<CompletableFuture<PartnerSkus>> futures
+    public BlockingQueue<PartnerSkusOutput> process(Stream<String> lines) throws InterruptedException {
+        List<CompletableFuture<PartnerSkusOutput>> futures
                 = createPartnersFutures(lines);
         this.initialSize = futures.size();
         this.remaining = initialSize;
@@ -63,7 +63,7 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
             try {
                 completed.add(f.get()); // todo future should implement a NULL object, for orElse?
             } catch (Exception e) {
-                log.error("Unable to process PartnerSkus");
+                log.error("Unable to process PartnerSkusOutput");
             }
         }));
         return completed;
@@ -80,9 +80,9 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
         return PartnerSkuLineAndKey.builder().partnerSkuKey(key).skuLine(line).build();
     }
 
-    private List<CompletableFuture<PartnerSkus>> createPartnersFutures(Stream<String> lines) {
+    private List<CompletableFuture<PartnerSkusOutput>> createPartnersFutures(Stream<String> lines) {
         Map<String, PartnerSkusLinesAndKeys> map = new HashMap<>();
-        List<CompletableFuture<PartnerSkus>> futures = lines
+        List<CompletableFuture<PartnerSkusOutput>> futures = lines
                 .map(line -> readPartnerSkuLineAndKey(line))
                 .reduce(map,
                         new PartnerLinesAccumulator(),
@@ -95,37 +95,37 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
     }
 
     /**
-     * Supplies futures on consolidated, expensive-to-complete PartnerSkus aggregations
+     * Supplies futures on consolidated, expensive-to-complete PartnerSkusOutput aggregations
      */
     @AllArgsConstructor
-    static class PartnerSkusConsolidator implements Function<PartnerSkusLinesAndKeys, CompletableFuture<PartnerSkus>> {
+    static class PartnerSkusConsolidator implements Function<PartnerSkusLinesAndKeys, CompletableFuture<PartnerSkusOutput>> {
 
         @NonNull
         private ObjectMapper mapper;
 
         @Override
-        public CompletableFuture<PartnerSkus> apply(PartnerSkusLinesAndKeys linesAndKeys) {
-            PartnerSkus partnerSkus = PartnerSkus.builder()
+        public CompletableFuture<PartnerSkusOutput> apply(PartnerSkusLinesAndKeys linesAndKeys) {
+            PartnerSkusOutput partnerSkusOutput = PartnerSkusOutput.builder()
                     .partner(linesAndKeys.getPartner())
                     .validSkus(new LinkedList<>())
                     .invalidSkus(new LinkedList<>())
                     .build();
-            return CompletableFuture.supplyAsync(handler(linesAndKeys, partnerSkus));
+            return CompletableFuture.supplyAsync(handler(linesAndKeys, partnerSkusOutput));
         }
 
-        private Supplier<PartnerSkus> handler(final PartnerSkusLinesAndKeys linesAndKeys,
-                                              final PartnerSkus partnerSkus) {
+        private Supplier<PartnerSkusOutput> handler(final PartnerSkusLinesAndKeys linesAndKeys,
+                                                    final PartnerSkusOutput partnerSkusOutput) {
             return () -> {
                 linesAndKeys.getLinesAndKeys().stream()
                         .forEachOrdered(lineAndKey -> {
                             PartnerSku sku = expensiveProcessing(lineAndKey.getSkuLine());
                             if (Optional.ofNullable(sku.getSku()).isPresent()) {
-                                partnerSkus.getValidSkus().add(sku);
+                                partnerSkusOutput.getValidSkus().add(sku);
                             } else {
-                                partnerSkus.getInvalidSkus().add(sku);
+                                partnerSkusOutput.getInvalidSkus().add(sku);
                             }
                         });
-                return partnerSkus;
+                return partnerSkusOutput;
             };
         }
 
@@ -173,7 +173,7 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
     // Spliterator:
 
     @Override
-    public boolean tryAdvance(Consumer<? super PartnerSkus> action) {
+    public boolean tryAdvance(Consumer<? super PartnerSkusOutput> action) {
         return remaining > 0
                 ? !nextCompleted().isCancelled()
                 // If we wanted series of dependent futures:
@@ -182,9 +182,9 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
                 : false;
     }
 
-    private PartnerSkus nextCompleted() {
+    private PartnerSkusOutput nextCompleted() {
         remaining--;
-        PartnerSkus next = completed.poll();
+        PartnerSkusOutput next = completed.poll();
         while (next == null) {
             try {
                 Thread.sleep(0,1);
@@ -197,7 +197,7 @@ public class InputPartnersPartitioner implements Spliterator<PartnerSkus> {
 
     }
     @Override
-    public Spliterator<PartnerSkus> trySplit() {
+    public Spliterator<PartnerSkusOutput> trySplit() {
         return null;
     }
 

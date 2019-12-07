@@ -12,13 +12,17 @@ import java.io.File;
 public class StreamsApp {
 
     public static void main(String ... args) {
+        if (args.length < 2) {
+            System.out.println("Usage: StreamApp <channel> /path/to/input.file");
+        }
         Injector injector = Guice.createInjector(new StreamsModule());
-        File input = new File(args[0]);
+        String channel = args[0];
+        File input = new File(args[1]);
         StreamsApp app = StreamsApp.builder()
                 .injector(injector)
                 .build();
         try {
-            app.run(input);
+            app.run(input, channel);
         } catch (Exception e) {
             log.error("Error", e);
         }
@@ -26,9 +30,9 @@ public class StreamsApp {
 
     private Injector injector;
 
-    public void run(final File input) throws Exception {
+    public void run(final File input, final String channel) throws Exception {
         RemoteInputProcessorService service = injector.getInstance(RemoteInputProcessorService.class);
-        RemoteOutputs remoteOutputs = service.doTerminations(input);
+        RemoteOutputs remoteOutputs = service.doTerminations(input, channel);
         log.info("LocalOutputs: {}", remoteOutputs);
     }
 }
