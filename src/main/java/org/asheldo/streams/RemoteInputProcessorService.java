@@ -7,12 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.asheldo.streams.data.PartnerSkusInput;
 import org.asheldo.streams.data.PartnerSkusOutput;
 import org.asheldo.streams.model.PartnerSkuKey;
+import org.asheldo.streams.partition.PartnerSkusInputPartitioner;
+import org.asheldo.streams.partition.StringWithIndex;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -47,31 +48,28 @@ public class RemoteInputProcessorService {
             throws Exception {
         // 1: cache chunk<N>.jsonl line-by-line and map it
         // TODO NEXT: create LocalInput with per-partner stuff like simple keys set, and local file
-        Map<String,PartnerSkusInput> partnerSkusInputPartitions = partitionLocalInput(remoteS3Input, localTemp);
-
+        Map<String,PartnerSkusInput> partnerSkusInputPartitions
+                = partitionLocalInput(remoteS3Input, localTemp);
 
         LocalOutputs localOutputs = LocalOutputs.builder()
                 .mapper(mapper)
                 .invalidated(new File(localTemp, "local-invalidated-subchunk"))
                 .validated(new File(localTemp, "local-validated-subchunk"))
                 .build();
-
-
         // Keep order
         for (PartnerSkusInput local : partnerSkusInputPartitions.values()) {
-
             // 2: what to do with lines? stream 'em ...
-            // TODO: Change this to consume input stream of per-partner local files
-            Stream<String> lines = local.getLines().stream(); // new BufferedReader(new FileReader(local.getLocalFile())).lines();
+            Stream<String> lines = local.getLines()
+                    .values() // from map
+                    .stream()
+                    .map(StringWithIndex::getString);
             // 3: partition/index lines by partner
             InputPartnersPartitioner partitioner = new InputPartnersPartitioner(executor, mapper);
             BlockingQueue<PartnerSkusOutput> partners = partitioner.process(lines);
             // 4: process sub-chunks
             // TODO:
             partners.stream().forEachOrdered(localOutputs.handler());
-
         }
-
         localOutputs.close();
         return localOutputs;
     }
@@ -95,7 +93,6 @@ public class RemoteInputProcessorService {
         File local = new File(localTemp, "local-chunkN.jsonl");
 
         // TODO Abstract this operation
-
         // TODO Stream each line to local
 
         Files.copy(remoteS3Input, local);
@@ -105,28 +102,27 @@ public class RemoteInputProcessorService {
         Map<String,PartnerSkusInput> result = new ConcurrentSkipListMap<>();
         Map<String,PartnerSkusInput> parts = StreamSupport
                 .stream(new PartnerSkusInputPartitioner(lines), parallel)
-                .reduce(result, accumulator(localTemp), combiner());
+                .reduce(result, accumulator(), combiner());
         // closeOrError(parts);
         return parts;
     }
 
-    private BiFunction<Map<String,PartnerSkusInput>, String,
-            Map<String,PartnerSkusInput>> accumulator(File localTemp) {
-        return (aMap, line) -> {
+    private BiFunction<Map<String,PartnerSkusInput>, StringWithIndex,
+            Map<String,PartnerSkusInput>> accumulator() {
+        return (aMap, stringWithIndex) -> {
             try {
-                PartnerSkuKey key = mapper.readValue(line, PartnerSkuKey.class); // Just the facts Ma'am
+                PartnerSkuKey key = mapper.readValue(stringWithIndex.getString(), PartnerSkuKey.class); // Just the facts Ma'am
                 aMap.compute(key.getPartner(), (partner, old) -> {
-                            if (old == null) {
-                                old = PartnerSkusInput.builder()
-                                        .partner(partner)
-                                        .skusByInputIndex(new LinkedList<>())
-                                        .build();
-                            }
-                            old.getLines().add(line + System.lineSeparator());
-                            old.getSkusByInputIndex().add(key);
-                            return old;
-                        }
-                );
+                    if (old == null) {
+                        old = PartnerSkusInput.builder()
+                                .partner(partner)
+                                .build();
+                    }
+                    int i = stringWithIndex.getIndex();
+                    old.getLines().put(i, stringWithIndex);
+                    old.getSkusByInputIndex().put(i, key);
+                    return old;
+                });
                 return aMap;
             } catch (Exception e) {
                 return null; // broke

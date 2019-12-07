@@ -48,18 +48,21 @@ class RemoteInputProcessorServiceSpec extends Specification {
         when:
         RemoteOutputs outputs = service.doTerminations(input, "stuff-ing")
         File valid = outputs.validated
-
-        then:
         List<String> validLines = Paths.get(valid.absolutePath).readLines("UTF-8")
         List<String> validSkus = validLines.stream().map { entry ->
             mapper.readValue(entry, PartnerSkuKey).sku
         }.collect(Collectors.toList())
-        validSkus.get(0) == "p1"
-        validSkus.get(2) == "q2"
+
+        then:
+        validSkus.contains("p1")
+        validSkus.contains("q" + partnerLines.get("q"))
+        validSkus.first() == "p1"
+        validSkus.last() == "q" + partnerLines.get("q")
 
         where:
-        partnerLines   | _
-        ["p":1, "q":2] | _
+        partnerLines        | _
+        ["p":1, "q":2]      | _
+        ["p":5000, "q":5000] | _
     }
 
 }

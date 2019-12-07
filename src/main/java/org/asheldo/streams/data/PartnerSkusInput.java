@@ -4,10 +4,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
-import org.asheldo.streams.model.PartnerSku;
 import org.asheldo.streams.model.PartnerSkuKey;
+import org.asheldo.streams.partition.StringWithIndex;
 
-import java.io.*;
 import java.util.*;
 
 @Builder(toBuilder = true)
@@ -17,16 +16,15 @@ public class PartnerSkusInput {
     @NonNull
     private String partner;
 
-    private final List<String> lines = new LinkedList<>();
+    private final Map<Integer, StringWithIndex> lines = new TreeMap<>();
 
-    @NonNull
     @ToString.Exclude
-    private List<PartnerSkuKey> skusByInputIndex;
+    private final Map<Integer,PartnerSkuKey> skusByInputIndex = new TreeMap<>();
 
     public PartnerSkusInput merge(PartnerSkusInput b) {
         if (b != this) {
-            skusByInputIndex.addAll(b.getSkusByInputIndex());
-            lines.addAll(b.getLines());
+            skusByInputIndex.putAll(b.getSkusByInputIndex());
+            lines.putAll(b.getLines());
         }
         return this;
     }
