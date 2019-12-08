@@ -2,6 +2,8 @@ package org.asheldo.streams;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.*;
+import org.asheldo.streams.service.S3StreamService;
+import org.asheldo.streams.service.S3StreamServiceImpl;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +20,12 @@ public class StreamsModule implements Module {
     @Singleton
     public ObjectMapper provideObjectMapper() {
         return new ObjectMapper();
+    }
+
+    @Provides
+    @Singleton
+    public S3StreamService providesS3StreamService() {
+        return new S3StreamServiceImpl();
     }
 
     @Provides

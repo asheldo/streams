@@ -30,26 +30,29 @@ public class RemoteInputProcessorService {
 
     private final ObjectMapper mapper;
 
+
     @Inject
-    public RemoteInputProcessorService(final ObjectMapper mapper, final Executor executor) {
+    public RemoteInputProcessorService(final ObjectMapper mapper,
+                                       final Executor executor) {
         this.mapper = mapper;
         this.executor = executor;
     }
 
-    // Imperative 1-4; versus ?
-    public RemoteOutputs doTerminations(final File remoteS3Input, final String channel) throws Exception {
-        File localTemp = new File(Files.createTempDir(), File.separator + channel + File.separator);
-        localTemp.mkdirs();
-        LocalOutputs localOutputs = buildOutputFiles(remoteS3Input, localTemp);
-        return createRemoteOutputs(remoteS3Input, localOutputs);
+
+    public RemoteOutputs doTerminations(final Stream<String> chunkLines,
+                                        final FeedBatchStepSettings feedBatchStepSettings,
+                                        final File localTemp) throws Exception {
+        LocalOutputs localOutputs = buildOutputFiles(chunkLines, localTemp);
+        return createRemoteOutputs(localTemp, localOutputs);
     }
 
-    private LocalOutputs buildOutputFiles(final File remoteS3Input, final File localTemp)
+    private LocalOutputs buildOutputFiles(final Stream<String> chunkLines,
+                                          final File localTemp)
             throws Exception {
         // 1: cache chunk<N>.jsonl line-by-line and map it
         // TODO NEXT: create LocalInput with per-partner stuff like simple keys set, and local file
         Map<String,PartnerSkusInput> partnerSkusInputPartitions
-                = partitionLocalInput(remoteS3Input, localTemp);
+                = partitionLocalInput(chunkLines);
 
         LocalOutputs localOutputs = LocalOutputs.builder()
                 .mapper(mapper)
@@ -74,10 +77,10 @@ public class RemoteInputProcessorService {
         return localOutputs;
     }
 
-    private RemoteOutputs createRemoteOutputs(File remoteS3Input, LocalOutputs localOutputs) throws IOException {
+    private RemoteOutputs createRemoteOutputs(File localTemp, LocalOutputs localOutputs) throws IOException {
         // TODO Real remote
-        File remoteInvalid = new File(remoteS3Input.getParentFile(), "remote-invalidated-subchunk.jsonl");
-        File remoteValid = new File(remoteS3Input.getParentFile(), "remote-validated-subchunk.jsonl");
+        File remoteInvalid = new File(localTemp, "remote-invalidated-subchunk.jsonl");
+        File remoteValid = new File(localTemp, "remote-validated-subchunk.jsonl");
         Files.copy(localOutputs.getInvalidated(), remoteInvalid);
         Files.copy(localOutputs.getValidated(), remoteValid);
         return RemoteOutputs.builder()
@@ -89,19 +92,11 @@ public class RemoteInputProcessorService {
     // Semi-costly
     // break up input chunk into natural (single-partner), organized (we have keys) subchunks
     // TODO will be collection/stream instead someday
-    private Map<String, PartnerSkusInput> partitionLocalInput(File remoteS3Input, File localTemp) throws Exception {
-        File local = new File(localTemp, "local-chunkN.jsonl");
-
-        // TODO Abstract this operation
-        // TODO Stream each line to local
-
-        Files.copy(remoteS3Input, local);
-        Stream<String> lines = new BufferedReader(new FileReader(local)).lines();
-
+    private Map<String, PartnerSkusInput> partitionLocalInput(Stream<String> chunkLines) throws Exception {
         boolean parallel = true;
         Map<String,PartnerSkusInput> result = new ConcurrentSkipListMap<>();
         Map<String,PartnerSkusInput> parts = StreamSupport
-                .stream(new PartnerSkusInputPartitioner(lines), parallel)
+                .stream(new PartnerSkusInputPartitioner(chunkLines), parallel)
                 .reduce(result, accumulator(), combiner());
         // closeOrError(parts);
         return parts;

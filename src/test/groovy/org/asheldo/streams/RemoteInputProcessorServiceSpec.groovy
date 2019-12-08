@@ -13,13 +13,7 @@ import java.util.stream.Collectors
 
 class RemoteInputProcessorServiceSpec extends Specification {
 
-    File input
-    FileWriter writer
-
     def setup() {
-        input = Files.createTempFile("pre", "suff").toFile()
-        input.deleteOnExit()
-        writer = new FileWriter(input)
     }
 
     /**
@@ -30,28 +24,37 @@ class RemoteInputProcessorServiceSpec extends Specification {
      }
      */
 
+    // def "test service with s3 object stream and valid skus"() {
+/*
+GetObjectRequest getObjectRequest = new GetObjectRequest(bucket, key);
+S3Object s3Object = amazonS3Client.getObject(getObjectRequest);
+S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
+ */
+
     @Unroll
-    def "test handler service valid sku"() {
+    def "test service with local file and valid skus"() {
         given:
-        partnerLines.entrySet().forEach { lines ->
-            String partner = lines.key
-            (1..(lines.value)).eachWithIndex { it, ix ->
-                writer.write(
-                        """{"partner":"${partner}","sku":"${partner}${it}","miscDetails":"xyz ${it}"}\n""")
+        List<String> chunkLines = new LinkedList<>()
+        String sku = """{"partner":"%s","sku":"%s%d","miscDetails":"xyz %d"}\n""".toString()
+        partnerLines.entrySet().forEach { partnerLine ->
+            String partner = partnerLine.key
+            (1..(partnerLine.value)).eachWithIndex { it, ix ->
+                chunkLines.add(String.format(sku, partner, partner, it, it))
             }
         }
-        writer.close()
         ObjectMapper mapper = new ObjectMapper()
         ExecutorService executorService = Executors.newSingleThreadExecutor()
         RemoteInputProcessorService service = new RemoteInputProcessorService(mapper, executorService)
+        File localTemp = Files.createTempDirectory("stuff-ing").toFile()
+        LastExposureSettingsImpl settings = new LastExposureSettingsImpl("stuff-ing")
 
         when:
-        RemoteOutputs outputs = service.doTerminations(input, "stuff-ing")
+        RemoteOutputs outputs = service.doTerminations(chunkLines.stream(), settings, localTemp); // input, "stuff-ing")
         File valid = outputs.validated
         List<String> validLines = Paths.get(valid.absolutePath).readLines("UTF-8")
-        List<String> validSkus = validLines.stream().map { entry ->
-            mapper.readValue(entry, PartnerSkuKey).sku
-        }.collect(Collectors.toList())
+        List<String> validSkus = validLines.stream()
+                .map { entry -> mapper.readValue(entry, PartnerSkuKey).sku }
+                .collect(Collectors.toList())
 
         then:
         validSkus.contains("p1")
