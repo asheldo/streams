@@ -8,3 +8,8 @@
  */
 
 rootProject.name = 'streams'
+
+include 'chunk-proc-app'
+include 'chunk-spliterator-lib'
+include 'chunk-processing-api'
+
