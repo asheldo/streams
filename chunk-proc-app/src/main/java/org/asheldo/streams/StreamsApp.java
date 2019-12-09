@@ -7,6 +7,7 @@ import com.google.inject.Injector;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.asheldo.streams.chunkproc.api.model.FeedBatchStepConfig;
 import org.asheldo.streams.chunkproc.api.model.FeedInputBase;
 import org.asheldo.streams.service.S3StreamService;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -64,7 +65,7 @@ public class StreamsApp {
 
         // BufferedReader reader = new BufferedReader(new InputStreamReader(s3objectResponse));
         FeedInputBase feedInputBase = readFeedInput(s3objectResponse, objectMapper);
-        LastExposureSettingsImpl lastExposureSettings = feedInputBase.getFeedBatchStepConfig();
+        FeedBatchStepConfig lastExposureSettings = feedInputBase.getFeedBatchStepConfig();
         String channel = feedInputBase.getChannel();
 
         File localTemp = new File(Files.createTempDir(), File.separator + channel + File.separator);

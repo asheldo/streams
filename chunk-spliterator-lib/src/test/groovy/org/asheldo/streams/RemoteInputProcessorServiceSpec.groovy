@@ -14,18 +14,9 @@ import java.util.stream.Collectors
 
 class RemoteInputProcessorServiceSpec extends Specification {
 
-    def setup() {
-    }
+//    def setup() {}
 
-    /**
-     public void run(final File input) throws Exception {
-     RemoteInputProcessorService service = injector.getInstance(RemoteInputProcessorService.class);
-     LocalOutputs outputs = service.doTerminations(input);
-     log.info("LocalOutputs: {}", outputs);
-     }
-     */
-
-    // def "test service with s3 object stream and valid skus"() {
+    // TODO def "test service with s3 object stream and valid skus"() {
 /*
 GetObjectRequest getObjectRequest = new GetObjectRequest(bucket, key);
 S3Object s3Object = amazonS3Client.getObject(getObjectRequest);
@@ -35,8 +26,8 @@ S3ObjectInputStream objectInputStream = s3Object.getObjectContent();
     @Unroll
     def "test service with local file and valid skus"() {
         given:
-        List<String> chunkLines = new LinkedList<>()
-        String sku = """{"partner":"%s","sku":"%s%d","miscDetails":"xyz %d"}\n""".toString()
+        List<String> chunkLines = [] as Queue
+        String sku = """{"partner":"%s","sku":"%s%d","miscDetails":"xyz %d"}\n"""
         partnerLines.entrySet().forEach { partnerLine ->
             String partner = partnerLine.key
             (1..(partnerLine.value)).eachWithIndex { it, ix ->
